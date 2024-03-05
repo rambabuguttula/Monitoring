@@ -1,0 +1,281 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": true,
+      "tags": [
+        "MetricsDashboard"
+      ],
+      "targetBlank": true,
+      "title": "Metrics details",
+      "tooltip": "",
+      "type": "dashboards",
+      "url": ""
+    },
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Go to Application",
+      "tooltip": "",
+      "type": "dashboards",
+      "url": ""
+    }
+  ],
+  "liveNow": false,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": null,
+      "panels": [],
+      "title": "Status of selected resource",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
+      "description": "",
+      "gridPos": {
+        "h": 4,
+        "w": 7,
+        "x": 0,
+        "y": 1
+      },
+      "id": null,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "<H2 style=\"text-align: center; color: #00ff00;\">Resource type: ${rt:text}</H1>\r\n<H2 style=\"text-align: center; word-wrap: break-word; color: #73bf69\"> Resource: ${rn}</H2>\r\n",
+        "mode": "markdown"
+      },
+      "pluginVersion": "9.2.3",
+      "type": "text"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 7
+      },
+      "id": null,
+      "panels": [],
+      "title": "Status by service type",
+      "type": "row"
+    },
+],
+  "refresh": "5m",
+  "schemaVersion": 37,
+  "style": "dark",
+  "tags": [
+    "Metrics"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "AZR-ARF-GRAFANA-E2ECONTROLTOWERPROD-Development",
+          "value": "AZR-ARF-GRAFANA-E2ECONTROLTOWERPROD-Development"
+        },
+        "hide": 2,
+        "includeAll": false,
+        "label": "DataSource",
+        "multi": false,
+        "name": "ds",
+        "options": [],
+        "query": "grafana-azure-monitor-datasource",
+        "queryValue": "",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "AppService",
+          "value": "/microsoft.web/sites/[^/]+$"
+        },
+        "hide": 2,
+        "includeAll": false,
+        "label": "Resource Type",
+        "multi": false,
+        "name": "rt",
+        "options": [
+       ],
+        "query": "",
+        "queryValue": "",
+        "skipUrlSync": false,
+        "type": "custom"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "ctpspux-dev",
+          "value": "ctpspux-dev"
+        },
+        "datasource": {
+          "type": "grafana-azure-monitor-datasource",
+          "uid": "${ds}"
+        },
+        "definition": "",
+        "hide": 2,
+        "includeAll": false,
+        "label": "Resource Name",
+        "multi": false,
+        "name": "rn",
+        "options": [],
+        "query": {
+          "azureLogAnalytics": {
+            "query": "",
+            "resource": ""
+          },
+          "azureResourceGraph": {
+            "query": "resources\r\n| project-rename ResourceId = id\r\n| extend ResourceId = tolower(ResourceId)\r\n| where extract(@\"/resourcegroups/([^/]+)/\", 1, ResourceId) in~ ($rg)\r\n| where ResourceId matches regex iff(indexof(\"$rt\",\"/microsoft.storage/storageaccounts/\") == -1,\r\n                                     \"$rt\",\r\n                                     \"/microsoft.storage/storageaccounts/[^/]+$\")\r\n| project name\r\n| extend name = iff(indexof(\"$rt\",\"/queueservices\") != -1, strcat(name,\"/queueservices/default\"),\r\n                iff(indexof(\"$rt\",\"/blobservices\") != -1, strcat(name,\"/blobservices/default\"),\r\n                iff(indexof(\"$rt\",\"/fileservices\") != -1, strcat(name,\"/fileservices/default\"),\r\n                iff(indexof(\"$rt\",\"/tableservices\") != -1, strcat(name,\"/tableservices/default\"), name))))"
+          },
+          "queryType": "Azure Resource Graph",
+          "refId": "A",
+          "subscriptions": [
+            "30db7e93-29f9-4a05-a9ee-8ee5295788bd"
+          ]
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 5,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": "Prod",
+          "value": "Prod"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "Environment",
+        "multi": false,
+        "name": "env",
+        "options": [
+          {
+            "selected": false,
+            "text": "Dev",
+            "value": "Dev"
+          },
+          {
+            "selected": false,
+            "text": "QA",
+            "value": "QA"
+          },
+          {
+            "selected": true,
+            "text": "Prod",
+            "value": "Prod"
+          }
+        ],
+        "query": "Dev, QA, Prod",
+        "queryValue": "",
+        "skipUrlSync": false,
+        "type": "custom"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": [
+            "azr-arq-e2econtroltowerprod-production"
+          ],
+          "value": [
+            "azr-arq-e2econtroltowerprod-production"
+          ]
+        },
+        "datasource": {
+          "type": "grafana-azure-monitor-datasource",
+          "uid": "${ds}"
+        },
+        "definition": "",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Resource Group",
+        "multi": true,
+        "name": "rg",
+        "options": [],
+        "query": {
+          "azureLogAnalytics": {
+            "query": "",
+            "resource": ""
+          },
+          "queryType": "Azure Log Analytics",
+          "refId": "A"
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-8m",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
+  "timezone": "",
+  "title": "Alert status of resource",
+  "uid": null,
+  "version": 29,
+  "weekStart": ""
+}

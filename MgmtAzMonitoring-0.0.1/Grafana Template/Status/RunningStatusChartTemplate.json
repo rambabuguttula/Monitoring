@@ -1,0 +1,116 @@
+{
+  "id": null,
+  "gridPos": {
+    "h": 2,
+    "w": 7,
+    "x": 0,
+    "y": 5
+  },
+  "type": "stat",
+  "transformations": [],
+  "datasource": {
+    "type": "grafana-azure-monitor-datasource",
+    "uid": "${ds}"
+  },
+  "pluginVersion": "9.2.3",
+  "fieldConfig": {
+    "defaults": {
+      "color": {
+        "mode": "thresholds"
+      },
+      "links": [],
+      "mappings": [],
+      "thresholds": {
+        "mode": "absolute",
+        "steps": [
+          {
+            "color": "#73BF69",
+            "value": null
+          },
+          {
+            "color": "red",
+            "value": 80
+          }
+        ]
+      }
+    },
+    "overrides": [
+      {
+        "matcher": {
+          "id": "byName",
+          "options": "currentValue"
+        },
+        "properties": [
+          {
+            "id": "mappings",
+            "value": [
+              {
+                "options": {
+                  "0": {
+                    "index": 0,
+                    "text": "Status: Running"
+                  },
+                  "1": {
+                    "color": "dark-red",
+                    "index": 1,
+                    "text": "Status: Not running"
+                  },
+                  "2": {
+                    "color": "dark-orange",
+                    "index": 2,
+                    "text": "Status: Disabled"
+                  }
+                },
+                "type": "value"
+              }
+            ]
+          },
+          {
+            "id": "links",
+            "value": [
+              {
+                "title": "Refresh",
+                "url": "https://ct.e2e.grafana.jnj.com/d/${__dashboard.uid}?orgId=1&var-ds=${ds}&﻿${rg:queryparam}﻿&﻿${rt:queryparam}﻿&﻿${rn:queryparam}&﻿${__url_time_range}"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "options": {
+    "colorMode": "value",
+    "graphMode": "area",
+    "justifyMode": "auto",
+    "orientation": "auto",
+    "reduceOptions": {
+      "calcs": [
+        "lastNotNull"
+      ],
+      "fields": "",
+      "values": false
+    },
+    "textMode": "value"
+  },
+  "targets": [
+    {
+      "azureMonitor": {
+        "allowedTimeGrainsMs": [],
+        "timeGrain": "auto"
+      },
+      "azureResourceGraph": {
+        "query": "resources\r\n| project-rename ResourceId = id\r\n| extend ResourceId = tolower(ResourceId)\r\n| where extract(@\"/resourcegroups/([^/]+)/\", 1, ResourceId) in~ ($rg)\r\n| where ResourceId matches regex iff(indexof(\"$rt\",\"/microsoft.storage/storageaccounts/\") == -1,\r\n                                     \"$rt\", \"/microsoft.storage/storageaccounts/[^/]+$\")\r\n| extend FullResName = iff(indexof('$rn','queueservices') != -1, extract('([^/]+)/.+',1,'$rn'),\r\n                       iff(indexof('$rn','blobservices') != -1, extract('([^/]+)/.+',1,'$rn'),\r\n                       iff(indexof('$rn','fileservices') != -1, extract('([^/]+)/.+',1,'$rn'),\r\n                       iff(indexof('$rn','tableservices') != -1, extract('([^/]+)/.+',1,'$rn'),\r\n                       iff(indexof('$rn','/') != -1, extract(tolower(strcat('.+/(', substring('$rn', 0, indexof('$rn','/')),'/[^/]+/', substring('$rn', indexof('$rn','/') + 1), ')$')), 1, ResourceId),'$rn')))))\r\n| where isnotempty(FullResName)\r\n| where ResourceId endswith FullResName\r\n| extend Status = iff((isempty(tostring(properties.status)) and isempty(tostring(properties.state))) or \r\n                       tostring(properties.state) == 'Running' or tostring(properties.status) == 'Ready' or tostring(properties.status) == 'Online', 0, 1)\r\n| where Status  == 1\r\n| extend currentValue = 1\r\n| extend Description = 'Resource is not running'\r\n| union (resources\r\n        | project-rename ResourceId = id            \r\n        | extend ResourceId = tolower(ResourceId)\r\n        | where extract(@\"/resourcegroups/([^/]+)/\", 1, ResourceId) in~ ($rg)\r\n        | where ResourceId matches regex iff(indexof(\"$rt\",\"/microsoft.storage/storageaccounts/\") == -1,\r\n                                             \"$rt\", \"/microsoft.storage/storageaccounts/[^/]+$\")\r\n        | extend FullResName = iff(indexof('$rn','queueservices') != -1, extract('([^/]+)/.+',1,'$rn'),\r\n                               iff(indexof('$rn','blobservices') != -1, extract('([^/]+)/.+',1,'$rn'),\r\n                               iff(indexof('$rn','fileservices') != -1, extract('([^/]+)/.+',1,'$rn'),\r\n                               iff(indexof('$rn','tableservices') != -1, extract('([^/]+)/.+',1,'$rn'),\r\n                               iff(indexof('$rn','/') != -1, extract(tolower(strcat('.+/(', substring('$rn', 0, indexof('$rn','/')),'/[^/]+/', substring('$rn', indexof('$rn','/') + 1), ')$')), 1, ResourceId),'$rn')))))\r\n        | where isnotempty(FullResName)\r\n        | where ResourceId endswith FullResName\r\n        | extend Enabled = iff(isempty(tostring(properties.enabled)) or tostring(properties.enabled) == 'true', 0, 1)\r\n        | where Enabled == 1\r\n        | extend currentValue = 2\r\n        | extend Description = 'Resource is disabled')\r\n| union (resources\r\n        | project-rename ResourceId = id            \r\n        | extend ResourceId = tolower(ResourceId)\r\n        | where extract(@\"/resourcegroups/([^/]+)/\", 1, ResourceId) in~ ($rg)\r\n        | where ResourceId matches regex iff(indexof(\"$rt\",\"/microsoft.storage/storageaccounts/\") == -1,\r\n                                             \"$rt\", \"/microsoft.storage/storageaccounts/[^/]+$\")\r\n        | extend FullResName = iff(indexof('$rn','queueservices') != -1, extract('([^/]+)/.+',1,'$rn'),\r\n                               iff(indexof('$rn','blobservices') != -1, extract('([^/]+)/.+',1,'$rn'),\r\n                               iff(indexof('$rn','fileservices') != -1, extract('([^/]+)/.+',1,'$rn'),\r\n                               iff(indexof('$rn','tableservices') != -1, extract('([^/]+)/.+',1,'$rn'),\r\n                               iff(indexof('$rn','/') != -1, extract(tolower(strcat('.+/(', substring('$rn', 0, indexof('$rn','/')),'/[^/]+/', substring('$rn', indexof('$rn','/') + 1), ')$')), 1, ResourceId),'$rn')))))\r\n        | where isnotempty(FullResName)\r\n        | where ResourceId endswith FullResName\r\n        | extend Running = iff((isempty(tostring(properties.enabled)) or tostring(properties.enabled) == 'true') and ((isempty(tostring(properties.status)) and isempty(tostring(properties.state))) or \r\n                       tostring(properties.state) == 'Running' or tostring(properties.status) == 'Ready' or tostring(properties.status) == 'Online'), 1, 0)\r\n        | where Running == 1\r\n        | extend currentValue = 0\r\n        | extend Description = 'Resource is running')\r\n| project currentValue"
+      },
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
+      "hide": false,
+      "queryType": "Azure Resource Graph",
+      "refId": "B",
+      "subscriptions": [
+        "30db7e93-29f9-4a05-a9ee-8ee5295788bd"
+      ]
+    }
+  ]
+}

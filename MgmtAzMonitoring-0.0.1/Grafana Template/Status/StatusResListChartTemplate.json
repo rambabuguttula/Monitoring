@@ -1,0 +1,406 @@
+{
+  "datasource": {
+    "type": "grafana-azure-monitor-datasource",
+    "uid": "${ds}"
+  },
+  "description": "",
+  "fieldConfig": {
+    "defaults": {
+      "color": {
+        "fixedColor": "red",
+        "mode": "continuous-GrYlRd"
+      },
+      "custom": {
+        "align": "center",
+        "displayMode": "color-background-solid",
+        "filterable": false,
+        "inspect": false,
+        "minWidth": 150
+      },
+      "links": [],
+      "mappings": [
+        {
+          "options": {
+            "0": {
+              "color": "dark-green",
+              "index": 1,
+              "text": "Ok"
+            },
+            "1": {
+              "color": "dark-red",
+              "index": 0,
+              "text": "ALARM!"
+            }
+          },
+          "type": "value"
+        }
+      ],
+      "thresholds": {
+        "mode": "absolute",
+        "steps": [
+          {
+            "color": "green",
+            "value": null
+          }
+        ]
+      }
+    },
+    "overrides": [
+      {
+        "matcher": {
+          "id": "byName",
+          "options": "name"
+        },
+        "properties": [
+          {
+            "id": "links",
+            "value": [
+              {
+                "targetBlank": false,
+                    "title": "View Alerts Details",
+                "url": "https://ct.e2e.grafana.jnj.com/d/${__dashboard.uid}/alert-status-of-resource?orgId=1&var-ds=${ds}&${rg:queryparam}&var-rt=${__data.fields.RawResourceType}&var-rn=${__data.fields.name}&${__url_time_range}"
+              }
+            ]
+          },
+          {
+            "id": "mappings",
+            "value": [
+              {
+                "options": {
+                  "pattern": ".*",
+                  "result": {
+                    "color": "#191818",
+                    "index": 0
+                  }
+                },
+                "type": "regex"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "matcher": {
+          "id": "byName",
+          "options": "type"
+        },
+        "properties": [
+          {
+            "id": "custom.hidden",
+            "value": true
+          }
+        ]
+      },
+      {
+        "matcher": {
+          "id": "byName",
+          "options": "isAlertStatus"
+        },
+        "properties": [
+          {
+            "id": "mappings",
+            "value": [
+              {
+                "options": {
+                  "0": {
+                    "color": "dark-green",
+                    "index": 1,
+                    "text": "Ok"
+                  },
+                  "1": {
+                    "color": "light-orange",
+                    "index": 0,
+                    "text": "WARN!"
+                  },
+                  "2": {
+                    "text": "ALARM!",
+                    "color": "dark-red",
+                    "index": 2
+                  }
+                },
+                "type": "value"
+              }
+            ]
+          },
+          {
+            "id": "custom.width",
+            "value": 100
+          },
+          {
+            "id": "links",
+            "value": [
+              {
+                "title": "Go to Azure Portal",
+                "url": "https://portal.azure.com/#@jnj.onmicrosoft.com/resource${__data.fields.ResourceId}",
+                "targetBlank": true
+              },
+              {
+                "title": "Open Metrics Dashboard",
+                "url": "https://ct.e2e.grafana.jnj.com/d/t-kjgBa4z/application-service-metrics?var-ds=${ds}&${rg:queryparam}&var-rt=${__data.fields.RawResourceType}&var-rn=${__data.fields.name}&${__url_time_range}",
+                "targetBlank": true
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "matcher": {
+          "id": "byName",
+          "options": "RawResourceType"
+        },
+        "properties": [
+          {
+            "id": "custom.hidden",
+            "value": true
+          }
+        ]
+      },
+      {
+        "matcher": {
+          "id": "byName",
+          "options": "ResourceId"
+        },
+        "properties": [
+          {
+            "id": "custom.hidden",
+            "value": true
+          }
+        ]
+      }
+    ]
+  },
+  "gridPos": {
+    "h": 21,
+    "w": 4,
+    "x": 0,
+    "y": 5
+  },
+  "id": null,
+  "links": [],
+  "options": {
+    "footer": {
+      "enablePagination": false,
+      "fields": [],
+      "reducer": [
+        "sum"
+      ],
+      "show": false
+    },
+    "showHeader": false
+  },
+  "pluginVersion": "9.2.3",
+  "targets": [
+    {
+      "azureLogAnalytics": {
+        "query": "let ResourcesByType = AzureMetrics | extend ResourceId = tolower(ResourceId) \r\n              | where $__timeFilter(TimeGenerated)\r\n              | extend ResourceId = tolower(ResourceId)\r\n              | where ResourceId has 'azr-arf-e2econtroltowerprod-development' or ResourceId has 'azr-arf-e2econtroltowerprod-qa' or ResourceId has 'azr-arf-e2econtroltowerprod-production'\r\n              | where ResourceId matches regex '/microsoft.web/sites/[^/]+$';\r\n              ResourcesByType\r\n              | where MetricName == 'AppConnections'\r\n              | summarize AverageAppConnections = avg(Average) by ResourceId| where AverageAppConnections >100\r\n             | join kind=fullouter (\r\n                      ResourcesByType\r\n                      | where MetricName == 'AverageMemoryWorkingSet'\r\n                      | summarize AverageAverageMemoryWorkingSet = avg(Average) by ResourceId| where AverageAverageMemoryWorkingSet >367001600\r\n                   ) on ResourceId\r\n                   | extend ResourceId = iff(isnotempty(ResourceId1), ResourceId1, ResourceId)\r\n                   | project-away ResourceId1\r\n                  | join kind=fullouter (\r\n                      ResourcesByType\r\n                      | where MetricName == 'BytesReceived'\r\n                      | summarize AverageBytesReceived = avg(Average) by ResourceId| where AverageBytesReceived >524288000\r\n                   ) on ResourceId\r\n                   | extend ResourceId = iff(isnotempty(ResourceId1), ResourceId1, ResourceId)\r\n                   | project-away ResourceId1\r\n                  | join kind=fullouter (\r\n                      ResourcesByType\r\n                      | where MetricName == 'BytesSent'\r\n                      | summarize AverageBytesSent = avg(Average) by ResourceId| where AverageBytesSent >524288000\r\n                   ) on ResourceId\r\n                   | extend ResourceId = iff(isnotempty(ResourceId1), ResourceId1, ResourceId)\r\n                   | project-away ResourceId1\r\n                  | join kind=fullouter (\r\n                      ResourcesByType\r\n                      | where MetricName == 'CpuTime'\r\n                      | summarize AverageCpuTime = avg(Average) by ResourceId| where AverageCpuTime >100\r\n                   ) on ResourceId\r\n                   | extend ResourceId = iff(isnotempty(ResourceId1), ResourceId1, ResourceId)\r\n                   | project-away ResourceId1\r\n                  | join kind=fullouter (\r\n                      ResourcesByType\r\n                      | where MetricName == 'FileSystemUsage'\r\n                      | summarize AverageFileSystemUsage = avg(Average) by ResourceId| where AverageFileSystemUsage >149946368\r\n                   ) on ResourceId\r\n                   | extend ResourceId = iff(isnotempty(ResourceId1), ResourceId1, ResourceId)\r\n                   | project-away ResourceId1\r\n                  | join kind=fullouter (\r\n                      ResourcesByType\r\n                      | where MetricName == 'Http3xx'\r\n                      | summarize AverageHttp3xx = avg(Average) by ResourceId| where AverageHttp3xx >4\r\n                   ) on ResourceId\r\n                   | extend ResourceId = iff(isnotempty(ResourceId1), ResourceId1, ResourceId)\r\n                   | project-away ResourceId1\r\n                  | join kind=fullouter (\r\n                      ResourcesByType\r\n                      | where MetricName == 'Http401'\r\n                      | summarize AverageHttp401 = avg(Average) by ResourceId| where AverageHttp401 >4\r\n                   ) on ResourceId\r\n                   | extend ResourceId = iff(isnotempty(ResourceId1), ResourceId1, ResourceId)\r\n                   | project-away ResourceId1\r\n                  | join kind=fullouter (\r\n                      ResourcesByType\r\n                      | where MetricName == 'Http403'\r\n                      | summarize AverageHttp403 = avg(Average) by ResourceId| where AverageHttp403 >4\r\n                   ) on ResourceId\r\n                   | extend ResourceId = iff(isnotempty(ResourceId1), ResourceId1, ResourceId)\r\n                   | project-away ResourceId1\r\n                  | join kind=fullouter (\r\n                      ResourcesByType\r\n                      | where MetricName == 'Http404'\r\n                      | summarize AverageHttp404 = avg(Average) by ResourceId| where AverageHttp404 >4\r\n                   ) on ResourceId\r\n                   | extend ResourceId = iff(isnotempty(ResourceId1), ResourceId1, ResourceId)\r\n                   | project-away ResourceId1\r\n                  | join kind=fullouter (\r\n                      ResourcesByType\r\n                      | where MetricName == 'Http406'\r\n                      | summarize AverageHttp406 = avg(Average) by ResourceId| where AverageHttp406 >4\r\n                   ) on ResourceId\r\n                   | extend ResourceId = iff(isnotempty(ResourceId1), ResourceId1, ResourceId)\r\n                   | project-away ResourceId1\r\n                  | join kind=fullouter (\r\n                      ResourcesByType\r\n                      | where MetricName == 'Http4xx'\r\n                      | summarize AverageHttp4xx = avg(Average) by ResourceId| where AverageHttp4xx >2\r\n                   ) on ResourceId\r\n                   | extend ResourceId = iff(isnotempty(ResourceId1), ResourceId1, ResourceId)\r\n                   | project-away ResourceId1\r\n                  | join kind=fullouter (\r\n                      ResourcesByType\r\n                      | where MetricName == 'Http5xx'\r\n                      | summarize AverageHttp5xx = avg(Average) by ResourceId| where AverageHttp5xx >2\r\n                   ) on ResourceId\r\n                   | extend ResourceId = iff(isnotempty(ResourceId1), ResourceId1, ResourceId)\r\n                   | project-away ResourceId1\r\n                  | join kind=fullouter (\r\n                      ResourcesByType\r\n                      | where MetricName == 'HttpResponseTime'\r\n                      | summarize AverageHttpResponseTime = avg(Average) by ResourceId| where AverageHttpResponseTime >15\r\n                   ) on ResourceId\r\n                   | extend ResourceId = iff(isnotempty(ResourceId1), ResourceId1, ResourceId)\r\n                   | project-away ResourceId1\r\n                  | join kind=fullouter (\r\n                      ResourcesByType\r\n                      | where MetricName == 'IoOtherBytesPerSecond'\r\n                      | summarize AverageIoOtherBytesPerSecond = avg(Average) by ResourceId| where AverageIoOtherBytesPerSecond >10485760\r\n                   ) on ResourceId\r\n                   | extend ResourceId = iff(isnotempty(ResourceId1), ResourceId1, ResourceId)\r\n                   | project-away ResourceId1\r\n                  | join kind=fullouter (\r\n                      ResourcesByType\r\n                      | where MetricName == 'IoOtherOperationsPerSecond'\r\n                      | summarize AverageIoOtherOperationsPerSecond = avg(Average) by ResourceId| where AverageIoOtherOperationsPerSecond >50\r\n                   ) on ResourceId\r\n                   | extend ResourceId = iff(isnotempty(ResourceId1), ResourceId1, ResourceId)\r\n                   | project-away ResourceId1\r\n                  | join kind=fullouter (\r\n                      ResourcesByType\r\n                      | where MetricName == 'IoReadBytesPerSecond'\r\n                      | summarize AverageIoReadBytesPerSecond = avg(Average) by ResourceId| where AverageIoReadBytesPerSecond >10485760\r\n                   ) on ResourceId\r\n                   | extend ResourceId = iff(isnotempty(ResourceId1), ResourceId1, ResourceId)\r\n                   | project-away ResourceId1\r\n                  | join kind=fullouter (\r\n                      ResourcesByType\r\n                      | where MetricName == 'IoReadOperationsPerSecond'\r\n                      | summarize AverageIoReadOperationsPerSecond = avg(Average) by ResourceId| where AverageIoReadOperationsPerSecond >50\r\n                   ) on ResourceId\r\n                   | extend ResourceId = iff(isnotempty(ResourceId1), ResourceId1, ResourceId)\r\n                   | project-away ResourceId1\r\n                  | join kind=fullouter (\r\n                      ResourcesByType\r\n                      | where MetricName == 'IoWriteBytesPerSecond'\r\n                      | summarize AverageIoWriteBytesPerSecond = avg(Average) by ResourceId| where AverageIoWriteBytesPerSecond >1024\r\n                   ) on ResourceId\r\n                   | extend ResourceId = iff(isnotempty(ResourceId1), ResourceId1, ResourceId)\r\n                   | project-away ResourceId1\r\n                  | join kind=fullouter (\r\n                      ResourcesByType\r\n                      | where MetricName == 'IoWriteOperationsPerSecond'\r\n                      | summarize AverageIoWriteOperationsPerSecond = avg(Average) by ResourceId| where AverageIoWriteOperationsPerSecond >1024\r\n                   ) on ResourceId\r\n                   | extend ResourceId = iff(isnotempty(ResourceId1), ResourceId1, ResourceId)\r\n                   | project-away ResourceId1\r\n                  | join kind=fullouter (\r\n                      ResourcesByType\r\n                      | where MetricName == 'MemoryWorkingSet'\r\n                      | summarize AverageMemoryWorkingSet = avg(Average) by ResourceId| where AverageMemoryWorkingSet >149946368\r\n                   ) on ResourceId\r\n                   | extend ResourceId = iff(isnotempty(ResourceId1), ResourceId1, ResourceId)\r\n                   | project-away ResourceId1\r\n                  | join kind=fullouter (\r\n                      ResourcesByType\r\n                      | where MetricName == 'PrivateBytes'\r\n                      | summarize AveragePrivateBytes = avg(Average) by ResourceId| where AveragePrivateBytes >262144000\r\n                   ) on ResourceId\r\n                   | extend ResourceId = iff(isnotempty(ResourceId1), ResourceId1, ResourceId)\r\n                   | project-away ResourceId1\r\n                  | join kind=fullouter (\r\n                      ResourcesByType\r\n                      | where MetricName == 'Requests'\r\n                      | summarize AverageRequests = avg(Average) by ResourceId| where AverageRequests >100000\r\n                   ) on ResourceId\r\n                   | extend ResourceId = iff(isnotempty(ResourceId1), ResourceId1, ResourceId)\r\n                   | project-away ResourceId1\r\n                  | join kind=fullouter (\r\n                      ResourcesByType\r\n                      | where MetricName == 'RequestsInApplicationQueue'\r\n                      | summarize AverageRequestsInApplicationQueue = avg(Average) by ResourceId| where AverageRequestsInApplicationQueue >100\r\n                   ) on ResourceId\r\n                   | extend ResourceId = iff(isnotempty(ResourceId1), ResourceId1, ResourceId)\r\n                   | project-away ResourceId1\r\n                  | join kind=fullouter (\r\n                      ResourcesByType\r\n                      | where MetricName == 'Threads'\r\n                      | summarize AverageThreads = avg(Average) by ResourceId| where AverageThreads >1000\r\n                   ) on ResourceId\r\n                   | extend ResourceId = iff(isnotempty(ResourceId1), ResourceId1, ResourceId)\r\n                   | project-away ResourceId1\r\n                  | extend isAlert = 1\r\n               | extend ResourceId = iff(indexof(ResourceId, '/queueservices/') != -1, extract('(.+)/queueservices/[^/]+$', 1, ResourceId), ResourceId)\r\n               | summarize isAlert=min(isAlert) by ResourceId",
+        "resource": ""
+      },
+      "azureMonitor": {
+        "allowedTimeGrainsMs": [],
+        "timeGrain": "auto"
+      },
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
+      "queryType": "Azure Log Analytics",
+      "refId": "A"
+    },
+    {
+      "azureMonitor": {
+        "allowedTimeGrainsMs": [],
+        "timeGrain": "auto"
+      },
+      "azureResourceGraph": {
+        "query": "resources\r\n                        | project-rename ResourceId = id \r\n                        | extend ResourceId = tolower(ResourceId)\r\n                        | where ResourceId has 'azr-arf-e2econtroltowerprod-development' or ResourceId has 'azr-arf-e2econtroltowerprod-qa' or ResourceId has 'azr-arf-e2econtroltowerprod-production'\r\n                        | where ResourceId matches regex '/microsoft.web/sites/[^/]+$'\r\n                        | extend Status = iff((isempty(tostring(properties.status)) and isempty(tostring(properties.state))) or \r\n                                               tostring(properties.state) == 'Running' or tostring(properties.status) == 'Ready' or tostring(properties.status) == 'Online', 0, 1)\r\n                        | extend Enabled = iff(isempty(tostring(properties.enabled)) or tostring(properties.enabled) == 'true', 0, 1)\r\n                      | extend RawResourceType = \"%2fmicrosoft.web%2fsites%2f%5b%5e%2f%5d%2b%24\""
+      },
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
+      "hide": false,
+      "queryType": "Azure Resource Graph",
+      "refId": "B",
+      "subscriptions": [
+        "30db7e93-29f9-4a05-a9ee-8ee5295788bd"
+      ]
+    }
+  ],
+  "title": "Application services",
+  "transformations": [
+    {
+      "id": "sortBy",
+      "options": {
+        "fields": {},
+        "sort": [
+          {
+            "field": "name"
+          }
+        ]
+      }
+    },
+    {
+      "id": "joinByField",
+      "options": {
+        "byField": "ResourceId",
+        "mode": "outer"
+      }
+    },
+    {
+      "id": "filterByValue",
+      "options": {
+        "filters": [
+          {
+            "fieldName": "name",
+            "config": {
+              "id": "isNull",
+              "options": {}
+            }
+          }
+        ],
+        "type": "exclude",
+        "match": "any"
+      }
+    },
+    {
+      "id": "calculateField",
+      "options": {
+        "alias": "isAlertStatus",
+        "mode": "reduceRow",
+        "reduce": {
+          "include": [
+            "Status",
+            "Enabled",
+            "StatusThreshold"
+          ],
+          "reducer": "max"
+        }
+      }
+    },
+    {
+      "id": "organize",
+      "options": {
+        "excludeByName": {
+          "AverageAppConnections": true,
+          "AverageAverageMemoryWorkingSet": true,
+          "AverageBytesReceived": true,
+          "AverageBytesSent": true,
+          "AverageCpuTime": true,
+          "AverageFileSystemUsage": true,
+          "AverageHttp3xx": true,
+          "AverageHttp401": true,
+          "AverageHttp403": true,
+          "AverageHttp404": true,
+          "AverageHttp406": true,
+          "AverageHttp4xx": true,
+          "AverageHttp5xx": true,
+          "AverageHttpResponseTime": true,
+          "AverageIoOtherBytesPerSecond": true,
+          "AverageIoOtherOperationsPerSecond": true,
+          "AverageIoReadBytesPerSecond": true,
+          "AverageIoReadOperationsPerSecond": true,
+          "AverageIoWriteBytesPerSecond": true,
+          "AverageIoWriteOperationsPerSecond": true,
+          "AverageMemoryWorkingSet": true,
+          "AveragePrivateBytes": true,
+          "AverageRequests": true,
+          "AverageRequestsInApplicationQueue": true,
+          "AverageThreads": true,
+          "Enabled": true,
+          "Placeholder": true,
+          "ResourceId": false,
+          "Status": true,
+          "apiVersion": true,
+          "extendedLocation": true,
+          "identity": true,
+          "isAlert": true,
+          "kind": true,
+          "location": true,
+          "managedBy": true,
+          "name": false,
+          "plan": true,
+          "properties": true,
+          "resourceGroup": true,
+          "sku": true,
+          "subscriptionId": true,
+          "systemData": true,
+          "tags": true,
+          "tenantId": true,
+          "type": false,
+          "zones": true,
+          "StatusThreshold": true,
+          "MonitoringTag": true
+        },
+        "indexByName": {
+          "AverageAppConnections": 6,
+          "AverageAverageMemoryWorkingSet": 7,
+          "AverageBytesReceived": 8,
+          "AverageBytesSent": 9,
+          "AverageCpuTime": 10,
+          "AverageFileSystemUsage": 11,
+          "AverageHttp3xx": 12,
+          "AverageHttp401": 13,
+          "AverageHttp403": 14,
+          "AverageHttp404": 15,
+          "AverageHttp406": 16,
+          "AverageHttp4xx": 17,
+          "AverageHttp5xx": 18,
+          "AverageHttpResponseTime": 19,
+          "AverageIoOtherBytesPerSecond": 20,
+          "AverageIoOtherOperationsPerSecond": 21,
+          "AverageIoReadBytesPerSecond": 22,
+          "AverageIoReadOperationsPerSecond": 23,
+          "AverageIoWriteBytesPerSecond": 24,
+          "AverageIoWriteOperationsPerSecond": 25,
+          "AverageMemoryWorkingSet": 26,
+          "AveragePrivateBytes": 27,
+          "AverageRequests": 28,
+          "AverageRequestsInApplicationQueue": 29,
+          "AverageThreads": 30,
+          "Enabled": 48,
+          "Placeholder": 4,
+          "RawResourceType": 3,
+          "ResourceId": 5,
+          "Status": 47,
+          "apiVersion": 38,
+          "extendedLocation": 45,
+          "identity": 43,
+          "isAlert": 31,
+          "isAlertStatus": 1,
+          "kind": 33,
+          "location": 34,
+          "managedBy": 37,
+          "name": 0,
+          "plan": 40,
+          "properties": 41,
+          "resourceGroup": 35,
+          "sku": 39,
+          "subscriptionId": 36,
+          "systemData": 46,
+          "tags": 42,
+          "tenantId": 32,
+          "type": 2,
+          "zones": 44
+        },
+        "renameByName": {
+          "ResourceId": "",
+          "name": "",
+          "type": ""
+        }
+      }
+    },
+    {
+      "id": "sortBy",
+      "options": {
+        "fields": {},
+        "sort": [
+          {
+            "desc": true,
+            "field": "isAlertStatus"
+          }
+        ]
+      }
+    }
+  ],
+  "type": "table"
+}

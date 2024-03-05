@@ -1,0 +1,105 @@
+{
+  "datasource": {
+    "type": "grafana-azure-monitor-datasource",
+    "uid": "${ds}"
+  },
+  "description": "The amount of CPU consumed by the app, in seconds",
+  "fieldConfig": {
+    "defaults": {
+      "color": {
+        "fixedColor": "#fdfafa",
+        "mode": "fixed"
+      },
+      "custom": {
+        "axisCenteredZero": false,
+        "axisColorMode": "text",
+        "axisLabel": "",
+        "axisPlacement": "auto",
+        "barAlignment": 0,
+        "drawStyle": "line",
+        "fillOpacity": 0,
+        "gradientMode": "none",
+        "hideFrom": {
+          "legend": false,
+          "tooltip": false,
+          "viz": false
+        },
+        "lineInterpolation": "linear",
+        "lineWidth": 1,
+        "pointSize": 5,
+        "scaleDistribution": {
+          "type": "linear"
+        },
+        "showPoints": "auto",
+        "spanNulls": false,
+        "stacking": {
+          "group": "A",
+          "mode": "none"
+        },
+        "thresholdsStyle": {
+          "mode": "line+area"
+        }
+      },
+      "mappings": [],
+      "thresholds": {
+        "mode": "absolute",
+        "steps": [
+          {
+            "color": "green",
+            "value": null
+          },
+          {
+            "color": "yellow",
+            "value": 330301440
+          },
+          {
+            "value": 367001600,
+            "color": "dark-red"
+          }
+        ]
+      },
+      "unit": "s"
+    },
+    "overrides": []
+  },
+  "gridPos": {
+    "h": 8,
+    "w": 12,
+    "x": 0,
+    "y": 0
+  },
+  "id": null,
+  "options": {
+    "legend": {
+      "calcs": [],
+      "displayMode": "list",
+      "placement": "bottom",
+      "showLegend": false
+    },
+    "tooltip": {
+      "mode": "single",
+      "sort": "none"
+    }
+  },
+  "targets": [
+    {
+      "azureLogAnalytics": {
+        "query": "//AppService CPUTime\r\nAzureMetrics \r\n| where $__timeFilter(TimeGenerated)\r\n| where Resource has \"$devappservicename\"\r\n| where ResourceProvider has \"MICROSOFT.WEB\"\r\n| where MetricName == \"CpuTime\"\r\n| order by TimeGenerated\r\n| project TimeGenerated, Resource, Average",
+        "resource": "/subscriptions/$sub/resourceGroups/$rg/providers/Microsoft.OperationalInsights/workspaces/$workspace",
+        "resultFormat": "time_series"
+      },
+      "azureMonitor": {
+        "allowedTimeGrainsMs": [],
+        "timeGrain": "auto"
+      },
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
+      "queryType": "Azure Log Analytics",
+      "refId": "A"
+    }
+  ],
+  "title": "CPU time",
+  "type": "timeseries"
+}

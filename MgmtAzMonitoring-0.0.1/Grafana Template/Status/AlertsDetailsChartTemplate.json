@@ -1,0 +1,176 @@
+{
+  "id": null,
+  "gridPos": {
+    "h": 6,
+    "w": 17,
+    "x": 7,
+    "y": 1
+  },
+  "type": "table",
+  "title": "Alerts of $rt - $rn (from $rg RG)",
+  "transformations": [
+    {
+      "id": "convertFieldType",
+      "options": {
+        "fields": {},
+        "conversions": [
+          {
+            "targetField": "currentValue",
+            "destinationType": "string"
+          }
+        ]
+      }
+    },
+    {
+      "id": "organize",
+      "options": {
+        "excludeByName": {
+          "ResourceId": true,
+          "StatusThreshold": true
+        },
+        "indexByName": {
+          "TimeGenerated": 0,
+          "Description": 1,
+          "currentValue": 2,
+          "Unit": 3,
+          "ResourceId": 4
+        },
+        "renameByName": {
+          "currentValue": "Last Abnormal Value"
+        }
+      }
+    }
+  ],
+  "datasource": {
+    "type": "grafana-azure-monitor-datasource",
+    "uid": "${ds}"
+  },
+  "fieldConfig": {
+    "defaults": {
+      "color": {
+        "mode": "thresholds"
+      },
+      "custom": {
+        "align": "auto",
+        "displayMode": "auto",
+        "filterable": false,
+        "inspect": false
+      },
+      "mappings": [],
+      "thresholds": {
+        "mode": "absolute",
+        "steps": [
+          {
+            "color": "yellow",
+            "value": null
+          }
+        ]
+      }
+    },
+    "overrides": [
+      {
+        "matcher": {
+          "id": "byName",
+          "options": "Description"
+        },
+        "properties": [
+          {
+            "id": "custom.width",
+            "value": 780
+          }
+        ]
+      },
+      {
+        "matcher": {
+          "id": "byName",
+          "options": "Last Abnormal Value"
+        },
+        "properties": [
+          {
+            "id": "custom.displayMode",
+            "value": "color-background"
+          },
+          {
+            "id": "custom.width",
+            "value": 189
+      },
+      {
+            "id": "mappings",
+            "value": [
+              {
+                "type": "regex",
+                "options": {
+                  "pattern": "(ALARM:)(.+)",
+                  "result": {
+                    "color": "dark-red",
+                    "index": 0,
+                    "text": "$2"
+                  }
+                }
+        },
+          {
+                "type": "regex",
+                "options": {
+                  "pattern": "(WARN:)(.+)",
+                  "result": {
+                    "text": "$2",
+                    "color": "light-orange",
+                    "index": 1
+                  }
+                }
+          }
+        ]
+      },
+      {
+            "id": "custom.align",
+            "value": "right"
+          }
+        ]
+      },
+      {
+        "matcher": {
+          "id": "byName",
+          "options": "TimeGenerated"
+        },
+        "properties": [
+          {
+            "id": "custom.width",
+            "value": 163
+          }
+        ]
+      }
+    ]
+  },
+  "options": {
+    "footer": {
+      "enablePagination": true,
+      "fields": "",
+      "reducer": [
+        "sum"
+      ],
+      "show": false
+    },
+    "showHeader": true,
+    "sortBy": []
+  },
+  "pluginVersion": "9.2.3",
+  "targets": [
+    {
+      "azureLogAnalytics": {
+        "query": " ",
+        "resource": "$workspace"
+      },
+      "azureMonitor": {
+        "allowedTimeGrainsMs": [],
+        "timeGrain": "auto"
+      },
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
+      "hide": false,
+      "queryType": "Azure Log Analytics",
+      "refId": "A"
+    }
+  ]
+}

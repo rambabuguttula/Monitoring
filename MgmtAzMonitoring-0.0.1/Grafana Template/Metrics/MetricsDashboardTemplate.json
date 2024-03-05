@@ -1,0 +1,237 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [],
+  "refresh": "5m",
+  "schemaVersion": 37,
+  "style": "dark",
+  "tags": [
+    "Metrics",
+    "Azure"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "AZR-ARF-GRAFANA-E2ECONTROLTOWERPROD-Development",
+          "value": "AZR-ARF-GRAFANA-E2ECONTROLTOWERPROD-Development"
+        },
+        "hide": 2,
+        "includeAll": false,
+        "label": "Data Source",
+        "multi": false,
+        "name": "ds",
+        "options": [],
+        "query": "grafana-azure-monitor-datasource",
+        "queryValue": "",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "CT-PortalAPI-Dev",
+          "value": "CT-PortalAPI-Dev"
+        },
+        "datasource": {
+          "type": "grafana-azure-monitor-datasource",
+          "uid": "${ds}"
+        },
+        "definition": "",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Resource Name",
+        "multi": false,
+        "name": "rn",
+        "options": [],
+        "query": {
+          "azureLogAnalytics": {
+            "query": "",
+            "resource": ""
+          },
+          "azureResourceGraph": {
+            "query": "resources\r\n| project-rename ResourceId = id\r\n| extend ResourceId = tolower(ResourceId)\r\n| where ResourceId matches regex tolower(\"$rg\")\r\n| where ResourceId matches regex iff(indexof(\"$rt\",\"/microsoft.storage/storageaccounts/\") == -1,\r\n                                     \"$rt\",\r\n                                     \"/microsoft.storage/storageaccounts/[^/]+$\")\r\n| project name\r\n| extend name = iff(indexof(\"$rt\",\"/queueservices\") != -1, strcat(name,\"/queueservices/default\"),\r\n                iff(indexof(\"$rt\",\"/blobservices\") != -1, strcat(name,\"/blobservices/default\"),\r\n                iff(indexof(\"$rt\",\"/fileservices\") != -1, strcat(name,\"/fileservices/default\"),\r\n                iff(indexof(\"$rt\",\"/tableservices\") != -1, strcat(name,\"/tableservices/default\"), name))))"
+          },
+          "queryType": "Azure Resource Graph",
+          "refId": "A",
+          "subscriptions": [
+            "30db7e93-29f9-4a05-a9ee-8ee5295788bd"
+          ]
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 5,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "AppService",
+          "value": "/microsoft.web/sites/[^/]+$"
+        },
+        "hide": 2,
+        "includeAll": false,
+        "label": "Resource Type",
+        "multi": false,
+        "name": "rt",
+        "options": [
+          {
+            "selected": true,
+            "text": "AppService",
+            "value": "/microsoft.web/sites/[^/]+$"
+          },
+          {
+            "selected": false,
+            "text": "DB",
+            "value": "/microsoft.sql/servers/[^/]+/databases"
+          },
+          {
+            "selected": false,
+            "text": "AppServiceSlot",
+            "value": "/microsoft.web/sites/[^/]+/slots"
+          },
+          {
+            "selected": false,
+            "text": "ASP",
+            "value": "/microsoft.web/serverfarms/[^/]+$"
+          },
+          {
+            "selected": false,
+            "text": "DataFactory",
+            "value": "/microsoft.datafactory/factories/[^/]+$"
+          },
+          {
+            "selected": false,
+            "text": "Network",
+            "value": "/microsoft.network/networkinterfaces/[^/]+$"
+          },
+          {
+            "selected": false,
+            "text": "SA",
+            "value": "/microsoft.storage/storageaccounts/[^/]+"
+          }
+        ],
+        "query": "AppService : /microsoft.web/sites/[^/]+$,DB : /microsoft.sql/servers/[^/]+/databases,AppServiceSlot : /microsoft.web/sites/[^/]+/slots,ASP : /microsoft.web/serverfarms/[^/]+$,DataFactory : /microsoft.datafactory/factories/[^/]+$,Network : /microsoft.network/networkinterfaces/[^/]+$,SA : /microsoft.storage/storageaccounts/[^/]+",
+        "queryValue": "",
+        "skipUrlSync": false,
+        "type": "custom"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "Dev",
+          "value": "Dev"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "Environment",
+        "multi": false,
+        "name": "env",
+        "options": [
+          {
+            "selected": true,
+            "text": "Dev",
+            "value": "Dev"
+          },
+          {
+            "selected": false,
+            "text": "QA",
+            "value": "QA"
+          },
+          {
+            "selected": false,
+            "text": "Prod",
+            "value": "Prod"
+          }
+        ],
+        "query": "Dev, QA, Prod",
+        "skipUrlSync": false,
+        "type": "custom"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": [
+            "azr-aqh-dnajsc-development"
+          ],
+          "value": [
+            "azr-aqh-dnajsc-development"
+          ]
+        },
+        "datasource": {
+          "type": "grafana-azure-monitor-datasource",
+          "uid": "${ds}"
+        },
+        "definition": "",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Resource Group",
+        "multi": true,
+        "name": "rg",
+        "options": [],
+        "query": {
+          "azureLogAnalytics": {
+            "query": "",
+            "resource": ""
+          },
+          "queryType": "Azure Log Analytics",
+          "refId": "A"
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
+  "timezone": "",
+  "title": "Application service metrics",
+  "uid": null,
+  "version": 19,
+  "weekStart": ""
+}

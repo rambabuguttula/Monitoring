@@ -1,0 +1,77 @@
+﻿{
+  "id": null,
+  "gridPos": {
+    "h": 3,
+    "w": 7,
+    "x": 0,
+    "y": 0
+  },
+  "type": "stat",
+  "title": "Status of  $rt",
+  "transformations": [
+    {
+      "id": "configFromData",
+      "options": {}
+    }
+  ],
+  "datasource": {
+    "uid": "${ds}",
+    "type": "grafana-azure-monitor-datasource"
+  },
+  "pluginVersion": "9.2.3",
+  "fieldConfig": {
+    "defaults": {
+      "mappings": [],
+      "thresholds": {
+        "mode": "absolute",
+        "steps": [
+          {
+            "color": "light-yellow",
+            "value": null
+          }
+        ]
+      },
+      "color": {
+        "mode": "thresholds"
+      },
+      "links": []
+    },
+    "overrides": []
+  },
+  "options": {
+    "reduceOptions": {
+      "values": false,
+      "calcs": [
+        "lastNotNull"
+      ],
+      "fields": "/^print_0$/"
+    },
+    "orientation": "auto",
+    "textMode": "value",
+    "colorMode": "value",
+    "graphMode": "area",
+    "justifyMode": "auto",
+    "text": {}
+  },
+  "targets": [
+    {
+      "azureLogAnalytics": {
+        "query": "print \"$rn\"",
+        "resource": "/subscriptions/30db7e93-29f9-4a05-a9ee-8ee5295788bd/resourcegroups/azr-arf-e2econtroltowerprod-development/providers/microsoft.operationalinsights/workspaces/e2econtroltowerprod-dev",
+        "resultFormat": "table"
+      },
+      "azureMonitor": {
+        "allowedTimeGrainsMs": [],
+        "timeGrain": "auto"
+      },
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
+      "hide": false,
+      "queryType": "Azure Log Analytics",
+      "refId": "A"
+    }
+  ],
+  "description": ""
+}
